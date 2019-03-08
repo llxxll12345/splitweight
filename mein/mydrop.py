@@ -115,19 +115,9 @@ def keep_one(layer_name, infile, outfile):
 
 def main(argv):
     in_file_name = argv[1]
-    #out_file_name= argv[2]
-    '''
+   
     names = get_layer_names(in_file_name)
-    for name in names:
-        keep_one(name, in_file_name, 'output/' + '-'.join(name.split('/')))
-    '''
-    get_layer_names(in_file_name)
-    names = [['name: ', 'vgg_16/fc6/weights'],
-            ['name: ', 'vgg_16/fc7/biases'],
-            ['name: ', 'vgg_16/fc7/weights'],
-            ['name: ', 'vgg_16/fc8/biases'],
-            ['name: ', 'vgg_16/fc8/weights'],
-            ['name: ', 'vgg_16/mean_rgb']]
+   
     for name in names:
         keep_one(name[1], in_file_name, 'output/' + '-'.join(name[1].split('/')))
 

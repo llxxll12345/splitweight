@@ -65,7 +65,7 @@ def data_csv():
 
 
 def main(argv):
-    #do_inspection_first
+    # do_inspection_first
     with open("layer_names.txt", 'r') as f:
         for line in f:
             line = line[:-1]
@@ -78,7 +78,7 @@ def main(argv):
                 weights_map.update({l_name: temp_list})
         
         format_csv()
-        #data_csv()
+        data_csv()
    
 if __name__ == '__main__':
     main(sys.argv)
