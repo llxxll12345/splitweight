@@ -5,7 +5,6 @@
   - After runinng this, you will find all checkpoint files in the output folder and a layer_names.txt
 
 - convert the checkpoint files of each layer to csv(read the raw data out)
-    - !!! Format should be the same as the example text file in this repo
     - Hint: All layer names and shape will be printed to the console when running mydrop
     - ```python restoreCSV.py```
 
