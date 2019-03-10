@@ -8,9 +8,10 @@ from tensorflow.python.platform import app
 from tensorflow.python.platform import flags
 
 
-def get_layer_names(file_name, do_print=True):
+def get_layer_names(file_name, do_print=True, to_file=True):
     # get a certain tensor myreader.get_tensor(name)
     res = []
+    data = []
     try:
         myreader = pywrap_tensorflow.NewCheckpointReader(file_name)
         var2shape = myreader.get_variable_to_shape_map()
@@ -19,10 +20,15 @@ def get_layer_names(file_name, do_print=True):
                 print(k + "," + str(myreader.get_tensor(k).shape) + "," + \
                         str(myreader.get_tensor(k).dtype))
             res.append(k)
+            data.append(k + "," + str(myreader.get_tensor(k).shape)[1:-1])
+        if to_file == True:
+            with open("layer_names.txt", "w") as f:
+                for d in data:
+                    f.writelines(d)
         return res
     except Exception as e:
         print(str(e))
-
+    
 
 def my_drop(input_file, out_file, layers=None, to_be_dropped=False, percent=1.0, mode=0):
     '''
@@ -38,7 +44,7 @@ def my_drop(input_file, out_file, layers=None, to_be_dropped=False, percent=1.0,
     # get variable to shape map
     var2shape = myreader.get_variable_to_shape_map()
     target = layers
-    names = get_layer_names(input_file, do_print=False)
+    names = get_layer_names(input_file, do_print=False, to_file=False)
 
     # for each key
     for k in sorted(var2shape):
@@ -78,20 +84,12 @@ def my_drop(input_file, out_file, layers=None, to_be_dropped=False, percent=1.0,
                     new_weights = flatten_weights.reshape(shape)
                     print(new_weights)
 
-                    #dropped[k + "_idx"] = tf.Variable(tf.constant(indice))
                     dropped[k + "_shape"] = tf.Variable(tf.constant(shape))
                 else:
                     continue
         else:
             # layers to be kept
             print("Keeping: ", k)
-            #dropped[k] = tf.Variable(tf.constant(weights))
-            #X = tf.Variable(np.zeros(shape), dtype=tf.float32)
-            #X = tf.get_variable(k, initializer = tf.zeros_initializer, shape=shape, dtype=tf.float32)
-            #with tf.Session() as sess:
-                #sess.run(tf.global_variables_initializer())
-                #X.assign(weights).eval()
-                #print("Evaled change.")
             dropped[k] = tf.Variable(tf.constant(weights))
             dropped[k + "_shape"] = tf.Variable(tf.constant(shape))
     save_data(out_file, dropped)
@@ -103,8 +101,7 @@ def save_data(out_file, dropped):
             if tf.is_variable_initialized(var).eval() == False:
                 sess.run(tf.variables_initializer([var]))
         final_saver = tf.train.Saver(dropped)
-        #if not os.path.exists(out_file[7:]):
-        #    os.makedirs(out_file[7:])
+        
         print("Saving model to  " + out_file)
         final_saver.save(sess, out_file + '/'+ out_file[7:] + '.ckpt')
 
@@ -119,7 +116,7 @@ def main(argv):
     names = get_layer_names(in_file_name)
    
     for name in names:
-        keep_one(name[1], in_file_name, 'output/' + '-'.join(name[1].split('/')))
+        keep_one(name, in_file_name, 'output/' + '-'.join(name.split('/')))
 
 if __name__ == '__main__':
     main(sys.argv)
