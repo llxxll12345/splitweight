@@ -10,6 +10,9 @@ from os.path import isfile, join
 from tensorflow.python import pywrap_tensorflow
 from tensorflow.python.platform import app
 from tensorflow.python.platform import flags
+import pandas as pd
+import glob
+import h5py
 
 weights_map = {}
 var_map = {}
@@ -55,7 +58,7 @@ def data_csv():
     for k, v in weights_map.items():
         file_name = '-'.join(k.split('/'))
         file_source = 'output/' + file_name + '/' + file_name + '.ckpt'
-        print(file_source)
+        print(k)
         weight = restore(file_source, k, v)
         print("size: ", v, weight[0])
         var_map.update({k: weight})
@@ -63,6 +66,23 @@ def data_csv():
         weight_na = np.asarray(weight)
         weight_na.tofile(csv_name, sep=',')
 
+
+def data_h5():
+    for k, v in weights_map.items():
+        file_name = k
+        file_source = 'output/' + file_name + '/' + file_name + '.ckpt'
+        k = "/".join(k.split('-'))
+        weight = restore(file_source, k, v)
+        print("size: ", v, weight[0])
+        df = pd.DataFrame({file_name: tuple(weight.flatten().tolist())})
+        h5_name = 'h5_output/' + file_name + '.h5' 
+        df.to_hdf(h5_name, key=file_name, mode='w')
+
+def read_h5():
+    file_list = glob.glob("h5_output/*.h5")
+    for file_name in file_list:
+        df = pd.read_hdf(file_name)
+        print(file_name[10:-3], " ", len(df[file_name[10:-3]]))
 
 def main(argv):
     # do_inspection_first
@@ -75,10 +95,13 @@ def main(argv):
             if layer_name != 'global_step':
                 temp_list = [int(i) for i in layer_size if (is_number(i) and i != '')]
                 print(temp_list)
+                if "fc" in layer_name and "weight" in layer_name:
+                        temp_list = [temp_list[0] * temp_list[1] * temp_list[2], temp_list[3]]
+                print(temp_list)
                 weights_map.update({l_name: temp_list})
         
         format_csv()
-        data_csv()
-   
+        data_h5()
+
 if __name__ == '__main__':
     main(sys.argv)
